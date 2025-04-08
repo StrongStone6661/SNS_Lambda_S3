@@ -15,8 +15,11 @@ Resources:
   # S3 Bucket
   UploadBucket:
     Type: AWS::S3::Bucket
+    DependsOn:
+      - S3UploadFunction
+      - S3LambdaPermission
     Properties:
-      BucketName: !Sub s3-lambda-sns-bucket-${Environment}-${AWS::Region}
+      BucketName: !Sub s3-lambda-sns-bucket-${Environment}-${AWS::Region}-${AWS::AccountId}
       # Removed NotificationConfiguration to avoid circular dependency
 
   # Lambda Function
@@ -31,6 +34,7 @@ Resources:
       Environment:
         Variables:
           SNS_TOPIC_ARN: !Ref SNSTopic
+          AWS_REGION: !Ref AWS::Region
       Policies:
         - AWSLambdaBasicExecutionRole
         - Statement:
