@@ -24,11 +24,17 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
-      - name: Install SAM CLI
+      - name: Install or Update SAM CLI
         run: |
           curl -L https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-x86_64.zip -o sam.zip
           unzip sam.zip -d sam-installation
-          sudo ./sam-installation/install
+          if [ -d "/usr/local/aws-sam-cli" ]; then
+            echo "Existing SAM CLI found, updating..."
+            sudo ./sam-installation/install --update
+          else
+            echo "No existing SAM CLI, installing fresh..."
+            sudo ./sam-installation/install
+          fi
           sam --version
       - name: Deploy SAM Application (Dev)
         run: |
@@ -58,11 +64,17 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
-      - name: Install SAM CLI
+      - name: Install or Update SAM CLI
         run: |
           curl -L https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-x86_64.zip -o sam.zip
           unzip sam.zip -d sam-installation
-          sudo ./sam-installation/install
+          if [ -d "/usr/local/aws-sam-cli" ]; then
+            echo "Existing SAM CLI found, updating..."
+            sudo ./sam-installation/install --update
+          else
+            echo "No existing SAM CLI, installing fresh..."
+            sudo ./sam-installation/install
+          fi
           sam --version
       - name: Deploy SAM Application (Prod)
         run: |
