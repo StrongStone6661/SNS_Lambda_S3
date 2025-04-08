@@ -1,0 +1,83 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: S3 to Lambda to SNS Event-Driven Architecture
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, prod]
+  SNSSubscriptionEmail:
+    Type: String
+    Description: Email address to subscribe to SNS notifications
+
+Resources:
+  # S3 Bucket
+  UploadBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub s3-lambda-sns-bucket-${Environment}-${AWS::Region}
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: s3:ObjectCreated:*
+            Function: !GetAtt S3UploadFunction.Arn
+
+  # Lambda Function
+  S3UploadFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: org.sendemail.lambda.LambdaHandler::handleRequest
+      Runtime: java17
+      CodeUri: ./target/SNS_Lambda_S3-1.0-SNAPSHOT.jar
+      MemorySize: 512
+      Timeout: 30
+      Environment:
+        Variables:
+          SNS_TOPIC_ARN: !Ref SNSTopic
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - Statement:
+            - Effect: Allow
+              Action:
+                - sns:Publish
+              Resource: !Ref SNSTopic
+    Events:
+      S3Upload:
+        Type: S3
+        Properties:
+          Bucket: !Ref UploadBucket
+          Events: s3:ObjectCreated:*
+
+  # SNS Topic
+  SNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub s3-upload-notifications-${Environment}
+
+  # SNS Subscription (Email)
+  SNSSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: email
+      Endpoint: !Ref SNSSubscriptionEmail
+      TopicArn: !Ref SNSTopic
+
+  # Permission for S3 to invoke Lambda
+  S3LambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref S3UploadFunction
+      Principal: s3.amazonaws.com
+      SourceArn: !GetAtt UploadBucket.Arn
+
+Outputs:
+  BucketName:
+    Description: Name of the S3 bucket
+    Value: !Ref UploadBucket
+  LambdaFunctionArn:
+    Description: ARN of the Lambda function
+    Value: !GetAtt S3UploadFunction.Arn
+  SNSTopicArn:
+    Description: ARN of the SNS topic
+    Value: !Ref SNSTopic
