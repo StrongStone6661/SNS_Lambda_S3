@@ -44,7 +44,8 @@ jobs:
             --no-fail-on-empty-changeset \
             --no-confirm-changeset \
             --region eu-central-1 \
-            --resolve-s3
+            --resolve-s3 \
+            --force-upload
 
 
 
