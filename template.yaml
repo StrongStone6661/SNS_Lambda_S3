@@ -22,7 +22,7 @@ Resources:
   S3UploadFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: org.sendemail.lambda.LambdaHandler::handleRequest
+      Handler: org.sendemail.Main::handleRequest
       Runtime: java17
       CodeUri: ./target/SNS_Lambda_S3-1.0-SNAPSHOT.jar
       MemorySize: 512
