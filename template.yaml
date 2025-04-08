@@ -15,14 +15,11 @@ Resources:
   # S3 Bucket
   UploadBucket:
     Type: AWS::S3::Bucket
-    DependsOn:
-      - S3UploadFunction
-      - S3LambdaPermission
     Properties:
       BucketName: !Sub s3-lambda-sns-bucket-${Environment}-${AWS::Region}-${AWS::AccountId}
-      # Removed NotificationConfiguration to avoid circular dependency
+      # No notification configuration here
 
-  # Lambda Function
+  # Lambda Function - Using Events property to connect to S3
   S3UploadFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -42,12 +39,12 @@ Resources:
               Action:
                 - sns:Publish
               Resource: !Ref SNSTopic
-    Events:
-      S3Upload:
-        Type: S3
-        Properties:
-          Bucket: !Ref UploadBucket
-          Events: s3:ObjectCreated:*
+      Events:
+        S3Event:
+          Type: S3
+          Properties:
+            Bucket: !Ref UploadBucket
+            Events: s3:ObjectCreated:*
 
   # SNS Topic
   SNSTopic:
@@ -62,15 +59,6 @@ Resources:
       Protocol: email
       Endpoint: !Ref SNSSubscriptionEmail
       TopicArn: !Ref SNSTopic
-
-  # Permission for S3 to invoke Lambda
-  S3LambdaPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref S3UploadFunction
-      Principal: s3.amazonaws.com
-      SourceArn: !GetAtt UploadBucket.Arn
 
 Outputs:
   BucketName:
