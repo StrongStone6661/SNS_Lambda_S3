@@ -17,21 +17,20 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub s3-lambda-sns-bucket-${Environment}-${AWS::Region}-${AWS::AccountId}
-      # Notification configuration will be set up separately
 
-  # Lambda Function
+  # Lambda Function - Using Events property to connect to S3
   S3UploadFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: org.sendemail.lambda.LambdaHandler::handleRequest
+      Handler: org.sendemail.Main::handleRequest
       Runtime: java17
-      CodeUri: ./target/SNS_Lambda_S3-1.0-SNAPSHOT.jar
+      CodeUri: .
       MemorySize: 512
       Timeout: 30
       Environment:
         Variables:
           SNS_TOPIC_ARN: !Ref SNSTopic
-          AWS_REGION: !Ref AWS::Region
+          # Removed AWS_REGION as it's automatically set by Lambda
       Policies:
         - AWSLambdaBasicExecutionRole
         - Statement:
@@ -39,6 +38,12 @@ Resources:
               Action:
                 - sns:Publish
               Resource: !Ref SNSTopic
+      Events:
+        S3Event:
+          Type: S3
+          Properties:
+            Bucket: !Ref UploadBucket
+            Events: s3:ObjectCreated:*
 
   # SNS Topic
   SNSTopic:
@@ -53,25 +58,6 @@ Resources:
       Protocol: email
       Endpoint: !Ref SNSSubscriptionEmail
       TopicArn: !Ref SNSTopic
-
-  # Permission for S3 to invoke Lambda
-  S3LambdaPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref S3UploadFunction
-      Principal: s3.amazonaws.com
-      SourceArn: !GetAtt UploadBucket.Arn
-
-  # S3 Bucket Notification Configuration (separate from bucket to avoid circular dependency)
-  BucketNotification:
-    Type: AWS::S3::BucketNotification
-    Properties:
-      Bucket: !Ref UploadBucket
-      LambdaConfigurations:
-        - Event: s3:ObjectCreated:*
-          Function: !GetAtt S3UploadFunction.Arn
-    DependsOn: S3LambdaPermission
 
 Outputs:
   BucketName:
