@@ -16,7 +16,7 @@ public class Main implements RequestHandler<S3Event, String> {
     public String handleRequest(S3Event s3Event, Context context) {
         // Create SNS client
         SnsClient snsClient = SnsClient.builder()
-                .region(Region.EU_CENTRAL_1) // Replace with your region
+                .region(Region.EU_CENTRAL_1)
                 .build();
 
 

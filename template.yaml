@@ -17,10 +17,7 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub s3-lambda-sns-bucket-${Environment}-${AWS::Region}
-      NotificationConfiguration:
-        LambdaConfigurations:
-          - Event: s3:ObjectCreated:*
-            Function: !GetAtt S3UploadFunction.Arn
+      # Removed NotificationConfiguration to avoid circular dependency
 
   # Lambda Function
   S3UploadFunction:
