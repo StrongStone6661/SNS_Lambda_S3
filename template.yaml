@@ -15,12 +15,9 @@ Resources:
   # S3 Bucket
   UploadBucket:
     Type: AWS::S3::Bucket
-    DependsOn:
-      - S3UploadFunction
-      - S3LambdaPermission
     Properties:
       BucketName: !Sub s3-lambda-sns-bucket-${Environment}-${AWS::Region}-${AWS::AccountId}
-      # Removed NotificationConfiguration to avoid circular dependency
+      # Notification configuration will be set up separately
 
   # Lambda Function
   S3UploadFunction:
@@ -42,12 +39,6 @@ Resources:
               Action:
                 - sns:Publish
               Resource: !Ref SNSTopic
-    Events:
-      S3Upload:
-        Type: S3
-        Properties:
-          Bucket: !Ref UploadBucket
-          Events: s3:ObjectCreated:*
 
   # SNS Topic
   SNSTopic:
@@ -71,6 +62,16 @@ Resources:
       FunctionName: !Ref S3UploadFunction
       Principal: s3.amazonaws.com
       SourceArn: !GetAtt UploadBucket.Arn
+
+  # S3 Bucket Notification Configuration (separate from bucket to avoid circular dependency)
+  BucketNotification:
+    Type: AWS::S3::BucketNotification
+    Properties:
+      Bucket: !Ref UploadBucket
+      LambdaConfigurations:
+        - Event: s3:ObjectCreated:*
+          Function: !GetAtt S3UploadFunction.Arn
+    DependsOn: S3LambdaPermission
 
 Outputs:
   BucketName:
