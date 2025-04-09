@@ -44,7 +44,8 @@ jobs:
             --capabilities CAPABILITY_IAM \
             --no-fail-on-empty-changeset \
             --no-confirm-changeset \
-            --region eu-central-1
+            --region eu-central-1 \
+            --resolve-s3
 
       - name: Deploy to Production
         if: github.ref == 'refs/heads/master'
@@ -55,4 +56,5 @@ jobs:
             --capabilities CAPABILITY_IAM \
             --no-fail-on-empty-changeset \
             --no-confirm-changeset \
-            --region eu-central-1
+            --region eu-central-1 \
+            --resolve-s3
