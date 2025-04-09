@@ -50,7 +50,7 @@ Resources:
     Properties:
       TopicName: !Sub s3-upload-notifications-${Environment}
 
-  # SNS Subscription (Email)
+  # SNS Subscription
   SNSSubscription:
     Type: AWS::SNS::Subscription
     Properties:
