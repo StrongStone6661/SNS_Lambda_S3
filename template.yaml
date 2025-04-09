@@ -30,7 +30,6 @@ Resources:
       Environment:
         Variables:
           SNS_TOPIC_ARN: !Ref SNSTopic
-          # Removed AWS_REGION as it's automatically set by Lambda
       Policies:
         - AWSLambdaBasicExecutionRole
         - Statement:
