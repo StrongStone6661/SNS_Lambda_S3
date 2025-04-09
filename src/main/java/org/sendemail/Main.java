@@ -9,7 +9,7 @@ import software.amazon.awssdk.regions.Region;
 
 public class Main implements RequestHandler<S3Event, String> {
 
-    // Environment variable for SNS topic ARN
+    // Environment variable for SNS topic
     private static final String SNS_TOPIC_ARN = System.getenv("SNS_TOPIC_ARN");
 
     @Override
