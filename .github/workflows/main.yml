@@ -4,85 +4,55 @@ on:
   push:
     branches:
       - master
+      - dev
 
 jobs:
-  deploy-dev:
+  deploy:
     runs-on: ubuntu-latest
-    environment: dev
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'corretto'
-      - name: Build with Maven
-        run: mvn package
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-      - name: Install or Update SAM CLI
-        run: |
-          curl -L https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-x86_64.zip -o sam.zip
-          unzip sam.zip -d sam-installation
-          if [ -d "/usr/local/aws-sam-cli" ]; then
-            echo "Existing SAM CLI found, updating..."
-            sudo ./sam-installation/install --update
-          else
-            echo "No existing SAM CLI, installing fresh..."
-            sudo ./sam-installation/install
-          fi
-          sam --version
-      - name: Deploy SAM Application (Dev)
-        run: |
-          sam deploy --stack-name s3-lambda-sns-dev \
-            --template-file template.yaml \
-            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
-            --region ${{ secrets.AWS_REGION }} \
-            --parameter-overrides Environment=dev SNSSubscriptionEmail=${{ secrets.DEV_SNS_EMAIL }} \
-            --no-fail-on-empty-changeset \
-            --resolve-s3
 
-  deploy-prod:
-    runs-on: ubuntu-latest
-    environment: prod
-    needs: deploy-dev
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'corretto'
-      - name: Build with Maven
-        run: mvn package
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-      - name: Install or Update SAM CLI
+          aws-region: eu-central-1
+
+      - name: Install SAM CLI
         run: |
-          curl -L https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-x86_64.zip -o sam.zip
-          unzip sam.zip -d sam-installation
-          if [ -d "/usr/local/aws-sam-cli" ]; then
-            echo "Existing SAM CLI found, updating..."
-            sudo ./sam-installation/install --update
-          else
-            echo "No existing SAM CLI, installing fresh..."
-            sudo ./sam-installation/install
-          fi
-          sam --version
-      - name: Deploy SAM Application (Prod)
+          pip install aws-sam-cli
+
+      - name: Build SAM Application
         run: |
-          sam deploy --stack-name s3-lambda-sns-prod \
-            --template-file template.yaml \
-            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
-            --region ${{ secrets.AWS_REGION }} \
-            --parameter-overrides Environment=prod SNSSubscriptionEmail=${{ secrets.PROD_SNS_EMAIL }} \
+          mvn clean package
+          sam build
+
+      - name: Deploy to Development
+        if: github.ref == 'refs/heads/dev'
+        run: |
+          sam deploy \
+            --stack-name weekeightlabdev \
+            --parameter-overrides Environment=dev EmailAddress=${{ secrets.DEV_SNS_EMAIL }} \
+            --capabilities CAPABILITY_IAM \
             --no-fail-on-empty-changeset \
-            --resolve-s3
+            --no-confirm-changeset \
+            --region eu-central-1
+
+      - name: Deploy to Production
+        if: github.ref == 'refs/heads/master'
+        run: |
+          sam deploy \
+            --stack-name weekeightlabprod \
+            --parameter-overrides Environment=prod EmailAddress=${{ secrets.PROD_SNS_EMAIL }} \
+            --capabilities CAPABILITY_IAM \
+            --no-fail-on-empty-changeset \
+            --no-confirm-changeset \
+            --region eu-central-1
