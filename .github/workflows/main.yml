@@ -34,11 +34,11 @@ jobs:
           mvn clean package
           sam build
 
-      - name: Deploy to Development
+      - name: Deploy to Production
         if: github.ref == 'refs/heads/master'
         run: |
           sam deploy \
-            --stack-name s3-lambda-sns-prod \
+            --stack-name weekeightlabprod \
             --parameter-overrides Environment=prod SNSSubscriptionEmail=${{ secrets.PROD_SNS_EMAIL }} \
             --capabilities CAPABILITY_IAM \
             --no-fail-on-empty-changeset \
@@ -47,15 +47,13 @@ jobs:
             --resolve-s3 \
             --force-upload
 
-
-
-      # - name: Deploy to Production
-      #   if: github.ref == 'refs/heads/master'
-      #   run: |
-      #     sam deploy \
-      #       --stack-name weekeightlabprod \
-      #       --parameter-overrides Environment=prod EmailAddress=${{ secrets.EMAIL_ADDRESS }} \
-      #       --capabilities CAPABILITY_IAM \
-      #       --no-fail-on-empty-changeset \
-      #       --no-confirm-changeset \
-      #       --region eu-central-1
+      - name: Deploy to Development
+        if: github.ref == 'refs/heads/dev'
+        run: |
+          sam deploy \
+            --stack-name weekeightlabdev \
+            --parameter-overrides Environment=prod EmailAddress=${{ secrets.DEV_SNS_EMAIL }} \
+            --capabilities CAPABILITY_IAM \
+            --no-fail-on-empty-changeset \
+            --no-confirm-changeset \
+            --region eu-central-1 
