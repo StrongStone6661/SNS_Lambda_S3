@@ -52,7 +52,7 @@ jobs:
         run: |
           sam deploy \
             --stack-name weekeightlabdev \
-            --parameter-overrides Environment=prod EmailAddress=${{ secrets.DEV_SNS_EMAIL }} \
+            --parameter-overrides Environment=dev EmailAddress=${{ secrets.DEV_SNS_EMAIL }} \
             --capabilities CAPABILITY_IAM \
             --no-fail-on-empty-changeset \
             --no-confirm-changeset \
