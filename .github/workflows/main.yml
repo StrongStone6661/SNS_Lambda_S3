@@ -47,7 +47,7 @@ jobs:
             --resolve-s3 \
             --force-upload
 
-      - name: Deploy to Development
+      - name: Deploy to Development.
         if: github.ref == 'refs/heads/dev'
         run: |
           sam deploy \
